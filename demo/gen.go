@@ -41,7 +41,7 @@ metadata:
   name: {{ .Name }}
   namespace: default
   labels:
-    acti: cat{{ .Category }}
+    greedy: cat{{ .Category }}
 spec:
   schedulerName: default-scheduler
   containers:
