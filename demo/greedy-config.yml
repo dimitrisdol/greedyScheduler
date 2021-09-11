@@ -10,36 +10,36 @@ profiles:
   plugins:
     #queueSort:
     #  enabled:
-    #  - name: ActiPlugin
+    #  - name: GreedyPlugin
     #  disabled:
     #  - name: "*"
     #preFilter:
     #  enabled:
-    #  - name: ActiPlugin
+    #  - name: GreedyPlugin
     filter:
       enabled:
-      - name: ActiPlugin
+      - name: GreedyPlugin
     #postFilter:
     #  enabled:
-    #  - name: ActiPlugin
+    #  - name: GreedyPlugin
     #preScore:
     #  enabled:
-    #  - name: ActiPlugin
+    #  - name: GreedyPlugin
     score:
       enabled:
-      - name: ActiPlugin
+      - name: GreedyPlugin
     #reserve:
     #  enabled:
-    #  - name: ActiPlugin
+    #  - name: GreedyPlugin
     #permit:
     #  enabled:
-    #  - name: ActiPlugin
+    #  - name: GreedyPlugin
     #preBind:
     #  enabled:
-    #  - name: ActiPlugin
+    #  - name: GreedyPlugin
     #bind:
     #  enabled:
-    #  - name: ActiPlugin
+    #  - name: GreedyPlugin
     #postBind:
     #  enabled:
-    #  - name: ActiPlugin
+    #  - name: GreedyPlugin

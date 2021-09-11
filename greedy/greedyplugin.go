@@ -1,12 +1,12 @@
-// Package acti contains an out-of-tree plugin based on the Kubernetes
+// Package greedy contains an out-of-tree plugin based on the Kubernetes
 // scheduling framework.
-package acti
+package greedy
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/dimitrisdol/greedyScheduler/acti/hardcoded"
+	"github.com/dimitrisdol/greedyScheduler/greedy/hardcoded"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
@@ -15,55 +15,55 @@ import (
 
 const (
 	// Name is the "official" external name of this scheduling plugin.
-	Name = "ActiPlugin"
+	Name = "GreedyPlugin"
 
 	// sla is the maximum slowdown that is allowed for an application when
 	// it is being scheduled along another one.
 	sla = 1.5
 
-	// actiLabelKey is the key of the Kubernetes Label which every
-	// application that needs to be tracked by ActiPlugin should have.
-	actiLabelKey = "acti"
+	// greedyLabelKey is the key of the Kubernetes Label which every
+	// application that needs to be tracked by GreedyPlugin should have.
+	greedyLabelKey = "greedy"
 )
 
-// ActiPlugin is an out-of-tree plugin for the kube-scheduler, which takes into
+// GreedyPlugin is an out-of-tree plugin for the kube-scheduler, which takes into
 // account information about the slowdown of colocated applications when they
 // are wrapped into Pods and scheduled on the Kubernetes cluster.
-type ActiPlugin struct {
+type GreedyPlugin struct {
 	handle framework.Handle
 	model  InterferenceModel
 }
 
 var (
-	_ framework.Plugin          = &ActiPlugin{}
-	_ framework.FilterPlugin    = &ActiPlugin{}
-	_ framework.ScorePlugin     = &ActiPlugin{}
-	_ framework.ScoreExtensions = &ActiPlugin{}
+	_ framework.Plugin          = &GreedyPlugin{}
+	_ framework.FilterPlugin    = &GreedyPlugin{}
+	_ framework.ScorePlugin     = &GreedyPlugin{}
+	_ framework.ScoreExtensions = &GreedyPlugin{}
 )
 
-// New instantiates an ActiPlugin.
+// New instantiates a GreedyPlugin.
 func New(configuration runtime.Object, f framework.Handle) (framework.Plugin, error) {
-	return &ActiPlugin{
+	return &GreedyPlugin{
 		handle: f,
-		model:  hardcoded.New(actiLabelKey),
+		model:  hardcoded.New(greedyLabelKey),
 	}, nil
 }
 
-// Name returns the official name of the ActiPlugin.
-func (_ *ActiPlugin) Name() string {
+// Name returns the official name of the GreedyPlugin.
+func (_ *GreedyPlugin) Name() string {
 	return Name
 }
 
-// findCurrentOccupants returns all Pods that are being tracked by ActiPlugin
+// findCurrentOccupants returns all Pods that are being tracked by GreedyPlugin
 // and are already scheduled on the Node represented by the given NodeInfo.
 //
 // NOTE: For now, the number of the returned Pods should *always* be at most 2;
 // otherwise, there must be some error in our scheduling logic.
-func (_ *ActiPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*corev1.Pod {
+func (_ *GreedyPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*corev1.Pod {
 	ret := make([]*corev1.Pod, 0, 2)
 	for _, podInfo := range nodeInfo.Pods {
 		for key := range podInfo.Pod.Labels {
-			if actiLabelKey == key {
+			if greedyLabelKey == key {
 				ret = append(ret, podInfo.Pod)
 			}
 		}
@@ -85,7 +85,7 @@ func (_ *ActiPlugin) findCurrentOccupants(nodeInfo *framework.NodeInfo) []*corev
 // For example, during preemption, we may pass a copy of the original
 // nodeInfo object that has some pods removed from it to evaluate the
 // possibility of preempting them to schedule the target pod.
-func (ap *ActiPlugin) Filter(
+func (ap *GreedyPlugin) Filter(
 	ctx context.Context,
 	state *framework.CycleState,
 	pod *corev1.Pod,
@@ -99,25 +99,25 @@ func (ap *ActiPlugin) Filter(
 	}
 	nodeName := nodeInfo.Node().Name
 
-	// If the given Pod does not have the actiLabelKey, approve it and let
+	// If the given Pod does not have the greedyLabelKey, approve it and let
 	// the other plugins decide for its fate.
-	if _, exists := pod.Labels[actiLabelKey]; !exists {
-		klog.V(2).Infof("blindly approving Pod '%s/%s' as it does not have ActiPlugin's label %q", pod.Namespace, pod.Name, actiLabelKey)
-		return framework.NewStatus(framework.Success, "pod is not tracked by ActiPlugin")
+	if _, exists := pod.Labels[greedyLabelKey]; !exists {
+		klog.V(2).Infof("blindly approving Pod '%s/%s' as it does not have GreedyPlugin's label %q", pod.Namespace, pod.Name, greedyLabelKey)
+		return framework.NewStatus(framework.Success, "pod is not tracked by GreedyPlugin")
 	}
 
-	// For the Node at hand, find all occupant Pods tracked by ActiPlugin.
+	// For the Node at hand, find all occupant Pods tracked by GreedyPlugin.
 	// These should *always* be fewer than or equal to 2, but we take the
 	// opportunity to assert this invariant later anyway.
 	occupants := ap.findCurrentOccupants(nodeInfo)
 
 	// Decide on how to proceed based on the number of current occupants
 	switch len(occupants) {
-	// If the Node is full (i.e., 2 applications tracked by ActiPlugin are
+	// If the Node is full (i.e., 2 applications tracked by GreedyPlugin are
 	// already scheduled on it), filter it out.
 	case 2:
-		klog.V(2).Infof("filtering Node %q out because 2 ActiPlugin applications are already scheduled there", nodeName)
-		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 ActiPlugin occupants", nodeName))
+		klog.V(2).Infof("filtering Node %q out because 2 GreedyPlugin applications are already scheduled there", nodeName)
+		return framework.NewStatus(framework.Unschedulable, fmt.Sprintf("Node '%s' already has 2 GreedyPlugin occupants", nodeName))
 	// If the existing occupant is slowed down prohibitively much by the
 	// new Pod's attack, filter the Node out.
 	case 1:
@@ -130,7 +130,7 @@ func (ap *ActiPlugin) Filter(
 		}
 		if score > sla {
 			msg := fmt.Sprintf("filtering Node '%s': new pod '%s/%s' ('%s') incurs huge slowdown on pod '%s/%s' ('%s')",
-				nodeName, pod.Namespace, pod.Name, pod.Labels[actiLabelKey], occ.Namespace, occ.Name, occ.Labels[actiLabelKey])
+				nodeName, pod.Namespace, pod.Name, pod.Labels[greedyLabelKey], occ.Namespace, occ.Name, occ.Labels[greedyLabelKey])
 			klog.V(2).Infof(msg)
 			return framework.NewStatus(framework.Unschedulable, msg)
 		}
@@ -152,10 +152,10 @@ func (ap *ActiPlugin) Filter(
 // indicating the rank of the node. All scoring plugins must return success or
 // the pod will be rejected.
 //
-// In the case of ActiPlugin, scoring is reversed; i.e., higher score indicates
+// In the case of GreedyPlugin, scoring is reversed; i.e., higher score indicates
 // worse scheduling decision.
 // This is taken into account and "fixed" later, during the normalization.
-func (ap *ActiPlugin) Score(
+func (ap *GreedyPlugin) Score(
 	ctx context.Context,
 	state *framework.CycleState,
 	p *corev1.Pod,
@@ -170,17 +170,12 @@ func (ap *ActiPlugin) Score(
 	//if node == nil {
 	//	return -1, framework.NewStatus(framework.Error, fmt.Sprintf("Node ('%s') cannot be nil", nodeName))
 	//}
-	// NOTE(ckatsak): ^ Not needed yet; left as a reminder for checking it.
-
-	// FIXME(ckatsak): Pods not tracked by ActiPlugin are given a perfect
-	// score for now, as they fall into the category of the empty Node.
 
 	occupants := ap.findCurrentOccupants(nodeInfo)
 
 	// If the Node is empty, for now, assume it is a perfect candidate.
 	// Therefore, the scheduled applications are expected to tend to spread
 	// among the available Nodes as much as possible.
-	// TODO(ckatsak): spreading vs packing: default behavior?
 	if len(occupants) == 0 {
 		return 0, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s' is empty: interim score = 0", nodeName))
 	}
@@ -197,9 +192,9 @@ func (ap *ActiPlugin) Score(
 	return score, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s': interim score = %d", nodeName, score))
 }
 
-// ScoreExtensions returns the ActiPlugin itself, since it implements the
+// ScoreExtensions returns the GreedyPlugin itself, since it implements the
 // framework.ScoreExtensions interface.
-func (ap *ActiPlugin) ScoreExtensions() framework.ScoreExtensions {
+func (ap *GreedyPlugin) ScoreExtensions() framework.ScoreExtensions {
 	return ap
 }
 
@@ -207,11 +202,11 @@ func (ap *ActiPlugin) ScoreExtensions() framework.ScoreExtensions {
 // "Score" method. A successful run of NormalizeScore will update the scores
 // list and return a success status.
 //
-// In the case of the ActiPlugin, its "Score" method produces scores of reverse
+// In the case of the GreedyPlugin, its "Score" method produces scores of reverse
 // priority (i.e., the lower the score, the better the result). Therefore all
 // scores have to be reversed during the normalization, so that higher score
 // indicates a better scheduling result in terms of slowdowns.
-func (_ *ActiPlugin) NormalizeScore(
+func (_ *GreedyPlugin) NormalizeScore(
 	ctx context.Context,
 	state *framework.CycleState,
 	p *corev1.Pod,
@@ -224,7 +219,7 @@ func (_ *ActiPlugin) NormalizeScore(
 			maxScore = scores[i].Score
 		}
 	}
-	// When no Pod (tracked by ActiPlugin) is scheduled on the Node,
+	// When no Pod (tracked by GreedyPlugin) is scheduled on the Node,
 	// maxScore will be 0.
 	if maxScore == 0 {
 		for i := range scores {

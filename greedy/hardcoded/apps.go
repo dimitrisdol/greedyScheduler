@@ -14,27 +14,27 @@ import (
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// HardcodedSlowDowns is an implementation of acti.InterferenceModel, where the
+// HardcodedSlowDowns is an implementation of greedy.InterferenceModel, where the
 // slowdowns among all applications are known and hardcoded.
 type HardcodedSlowDowns struct {
-	actiLabelKey string
+	greedyLabelKey string
 }
 
 // New returns a new HardcodedSlowDowns with the given label key (the one that
-// is used by ActiPlugin to track its applications).
-func New(actiLabelKey string) *HardcodedSlowDowns {
+// is used by GreedyPlugin to track its applications).
+func New(greedyLabelKey string) *HardcodedSlowDowns {
 	return &HardcodedSlowDowns{
-		actiLabelKey: actiLabelKey,
+		greedyLabelKey: greedyLabelKey,
 	}
 }
 
-// Attack implements acti.InterferenceModel; see the documentation there for
+// Attack implements greedy.InterferenceModel; see the documentation there for
 // more information.
 func (m *HardcodedSlowDowns) Attack(attacker, occupant *corev1.Pod) (float64, error) {
-	occPodCategory, _ := parseAppCategory(occupant.Labels[m.actiLabelKey])
+	occPodCategory, _ := parseAppCategory(occupant.Labels[m.greedyLabelKey])
 	//  occupant   ^^^   Pod's label's value must have been
 	// validated back when it was first scheduled on the Node
-	newPodCategory, err := parseAppCategory(attacker.Labels[m.actiLabelKey])
+	newPodCategory, err := parseAppCategory(attacker.Labels[m.greedyLabelKey])
 	if err != nil {
 		return -1, err
 	}
@@ -43,7 +43,7 @@ func (m *HardcodedSlowDowns) Attack(attacker, occupant *corev1.Pod) (float64, er
 
 const toInt64Multiplier = 100.
 
-// ToInt64Multiplier implements acti.InterferenceModel; see the documentation
+// ToInt64Multiplier implements greedy.InterferenceModel; see the documentation
 // there for more information.
 func (_ *HardcodedSlowDowns) ToInt64Multiplier() float64 {
 	return toInt64Multiplier
@@ -109,7 +109,7 @@ func (ac appCategory) attack(occupant appCategory) float64 {
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-// slowDownMatrix is a type alias for internal use in ActiPlugin.
+// slowDownMatrix is a type alias for internal use in GreedyPlugin.
 type slowDownMatrix map[appCategory]map[appCategory]float64
 
 // slowDowns is a hardcoded global map that represents a dense 2D matrix of the
