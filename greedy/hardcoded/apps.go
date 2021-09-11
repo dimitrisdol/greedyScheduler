@@ -1,4 +1,4 @@
-// Package hardcoded contains an implementation of acti.InterferenceModel,
+// Package hardcoded contains an implementation of greedy.InterferenceModel,
 // where the slowdowns among all applications are known and hardcoded.
 package hardcoded
 

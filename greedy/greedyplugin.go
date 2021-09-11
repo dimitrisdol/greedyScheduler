@@ -166,10 +166,6 @@ func (ap *GreedyPlugin) Score(
 	if err != nil {
 		return -1, framework.NewStatus(framework.Error, fmt.Sprintf("failed to get Node '%s' from snapshot: %v", nodeName, err))
 	}
-	//node := nodeInfo.Node()
-	//if node == nil {
-	//	return -1, framework.NewStatus(framework.Error, fmt.Sprintf("Node ('%s') cannot be nil", nodeName))
-	//}
 
 	occupants := ap.findCurrentOccupants(nodeInfo)
 
