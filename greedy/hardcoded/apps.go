@@ -56,6 +56,17 @@ func (_ *HardcodedSlowDowns) ToInt64Multiplier() float64 {
 ///////////////////////////////////////////////////////////////////////////////
 
 // appCategory is an enumeration of known application categories.
+// the 4 appCategories that are to be examined by the GreedyPlugin are as
+// follows:
+//  catA : insensitive and peaceful applications, considered the best for the
+//         plugin
+//  catB : sensitive and peaceful applications, can fit with other peaceful only
+//  catC : insensitive and aggressive applications, can fit with itself and catA
+//  catD : sensitive and aggressive applications, the worst kind and can only
+//         fit with catA
+//
+//  All of these are implemented by the slowdown matrix later
+
 type appCategory int64
 
 const (
