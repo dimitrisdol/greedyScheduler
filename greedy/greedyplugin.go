@@ -19,7 +19,7 @@ const (
 
 	// sla is the maximum slowdown that is allowed for an application when
 	// it is being scheduled along another one.
-	sla = 1.5
+	sla = 35
 
 	// greedyLabelKey is the key of the Kubernetes Label which every
 	// application that needs to be tracked by GreedyPlugin should have.
@@ -143,7 +143,7 @@ func (ap *GreedyPlugin) Filter(
 	// If more than 2 occupants are found to be already scheduled on the
 	// Node at hand, we must have fucked up earlier; report the error.
 	default:
-		klog.Errorf("detected %d occupant Pods tracked by ActiPlugin on Node %q", len(occupants), nodeName)
+		klog.Errorf("detected %d occupant Pods tracked by GreedyPlugin on Node %q", len(occupants), nodeName)
 		return framework.NewStatus(framework.Error, fmt.Sprintf("found %d occupants on '%s' already", len(occupants), nodeName))
 	}
 }
