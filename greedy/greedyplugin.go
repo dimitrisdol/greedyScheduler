@@ -23,7 +23,7 @@ const (
 
 	// greedyLabelKey is the key of the Kubernetes Label which every
 	// application that needs to be tracked by GreedyPlugin should have.
-	greedyLabelKey = "greedy"
+	greedyLabelKey = "category"
 )
 
 // GreedyPlugin is an out-of-tree plugin for the kube-scheduler, which takes into
