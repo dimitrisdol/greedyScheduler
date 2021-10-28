@@ -170,7 +170,7 @@ func (ap *GreedyPlugin) Score(
 	// If the given Pod does not have the greedyLabelKey, approve it and let
 	// the other plugins decide for its fate.
 	if _, exists := p.Labels[greedyLabelKey]; !exists {
-		klog.V(2).Infof("blindly scoring Pod '%s/%s' as it does not have GreedyPlugin's label %q", p.Namespace, p.Name, greedyquadLabelKey)
+		klog.V(2).Infof("blindly scoring Pod '%s/%s' as it does not have GreedyPlugin's label %q", p.Namespace, p.Name, greedyLabelKey)
 		return 0, framework.NewStatus(framework.Success, fmt.Sprintf("Node '%s' is free: interim score = 0", nodeName))
 	}
 
